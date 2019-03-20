@@ -176,7 +176,7 @@ class BarGenerator1(object):
             self.nextTime += self.delta
             while self.nextTime < tick.datetime:
                 self.nextTime += self.delta
-            # 如果nextTime为09:00:39.999000,那么bar开始时间为09:
+                # 如果nextTime为09:00:39.999000,那么bar开始时间为09:00:00
             self.bar.datetime = self.nextTime - self.delta + timedelta(microseconds=1)
             newBar = True
 
@@ -204,6 +204,9 @@ class BarGenerator1(object):
 
         self.lastTick = tick
         
+    #----------------------------------------------------------------------
+    def getLastBar(self):
+        return self.bar
 
 
 ########################################################################
