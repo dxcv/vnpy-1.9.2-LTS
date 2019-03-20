@@ -5,7 +5,7 @@ import numpy as np
 import talib
 
 from vnpy.trader.vtObject import VtBarData
-
+from datetime import timedelta
 
 ########################################################################
 class BarGenerator(object):
@@ -121,6 +121,89 @@ class BarGenerator(object):
         self.onBar(self.bar)
         self.bar = None
 
+
+
+########################################################################
+class BarGenerator1(object):
+    """
+    对原始K线合成器的改进,支持从秒级别的K线合成
+    """
+
+    #----------------------------------------------------------------------
+    def __init__(self, onBar, interval='1m'):
+        self.bar = None
+        self.lastTick = None
+        self.onBar = onBar
+    
+        self.nextTime = None
+        self.delta = self.__getDelta(interval)    
+
+    #----------------------------------------------------------------------
+    def __getDelta(self, interval):
+        """生成时间间隔对象"""
+        unit = interval[-1].lower()
+        i = int(interval[0:-1])
+        deltaDict = {
+            's': timedelta(seconds=i),
+            'm': timedelta(minutes=i),
+            'h': timedelta(hours=i),
+            'd': timedelta(days=i),
+            'w': timedelta(weeks=i)
+        }
+        return deltaDict[unit]    
+    
+    #----------------------------------------------------------------------
+    def updateTick(self, tick):
+        newBar = False
+
+        if self.bar is None:
+            self.bar = VtBarData()
+            # 假如第一个tick是9:00:01.500,那么bar开始时间为9:00:00
+            tm = tick.datetime.replace(second=0, microsecond=0)
+            self.bar.datetime = tm
+            """
+            这样处理,为了让nextTime要么小于tick.datetime,要么大于
+            tick.datetime,不考虑等于的情况,更为方便
+            """
+            self.nextTime = tm + self.delta - timedelta(microseconds=1)
+            newBar = True
+        elif tick.datetime > self.nextTime:
+
+            self.onBar(self.bar)
+            
+            self.bar = VtBarData()
+
+            self.nextTime += self.delta
+            while self.nextTime < tick.datetime:
+                self.nextTime += self.delta
+            # 如果nextTime为09:00:39.999000,那么bar开始时间为09:
+            self.bar.datetime = self.nextTime - self.delta + timedelta(microseconds=1)
+            newBar = True
+
+
+        if newBar:
+            self.bar.date = self.bar.datetime.strftime('%Y%m%d')
+            self.bar.time = self.bar.datetime.strftime('%H:%M:%S.%f')
+            self.bar.vtSymbol = tick.vtSymbol
+            self.bar.symbol = tick.symbol
+            self.bar.exchange = tick.exchange
+
+            self.bar.open = tick.lastPrice
+            self.bar.high = tick.lastPrice
+            self.bar.low = tick.lastPrice
+        else:
+            self.bar.high = max(self.bar.high, tick.lastPrice)
+            self.bar.low = min(self.bar.low, tick.lastPrice)
+
+        self.bar.close = tick.lastPrice
+        self.bar.openInterest = tick.openInterest
+        
+        if self.lastTick:
+            volumeChange = tick.volume - self.lastTick.volume
+            self.bar.volume += max(volumeChange, 0)
+
+        self.lastTick = tick
+        
 
 
 ########################################################################
