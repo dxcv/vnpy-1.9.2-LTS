@@ -113,6 +113,17 @@ def loadJsonSetting(settingFileName):
     return setting
     
     
+#----------------------------------------------------------------------
+def inTimeRange(now, timeRange):
+    from datetime import datetime
+    inRange = False
+    for t in timeRange:
+        start = datetime.strptime(t[0], '%H:%M:%S').time()
+        end = datetime.strptime(t[1], '%H:%M:%S').time()
+        inRange = inRange or (start <= now <= end)
+    return inRange
+
+
 # 函数常量    
 MAX_NUMBER = 10000000000000
 
