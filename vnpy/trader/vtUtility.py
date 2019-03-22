@@ -374,4 +374,40 @@ class ArrayManager(object):
         
         if array:
             return up, down
-        return up[-1], down[-1]
+        return up[-1],  down[-1]
+
+
+########################################################################
+class Callback(object):
+    """实现一个简单任务计划的功能"""
+
+    #----------------------------------------------------------------------
+    def __init__(self):
+        self.sortedTasks = []
+    
+    #----------------------------------------------------------------------
+    def callbackAt(self, at, callback, *args):
+        task = {}
+        task['callbackTime'] = at
+        task['callback'] = callback
+        task['args'] = args
+        self.sortedTasks.append(task)
+        self.__sorted()
+
+    #----------------------------------------------------------------------    
+    def updateTime(self, time):
+        for task in self.sortedTasks:
+            if task['callbackTime'] <= time:
+                task['callback'](*task['args'])
+            else:
+                break
+    
+    #----------------------------------------------------------------------
+    def __sorted(self):
+        self.sortedTasks = sorted(self.sortedTasks, 
+                                  key=lambda x: x['callbackTime'], 
+                                  )
+    
+
+    
+
