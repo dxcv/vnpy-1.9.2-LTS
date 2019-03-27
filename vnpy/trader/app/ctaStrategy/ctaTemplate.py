@@ -199,6 +199,27 @@ class CtaTemplate(object):
         
 
 ########################################################################
+class ExtTemplate(CtaTemplate):
+    """默认模板类功能的扩展"""
+
+    #----------------------------------------------------------------------
+    def __init__(self, ctaEngine, setting):
+        """Constructor"""
+        super(ExtTemplate, self).__init__(ctaEngine, setting)
+        self.entryPrice = None
+        self.exitPrice = None
+
+    #----------------------------------------------------------------------
+    def onTrade(self, trade):
+        """维护出场入场价格"""
+        if trade.offset == OFFSET_OPEN:
+            self.entryPrice = trade.price
+            self.exitPrice = None
+        else:
+            self.exitPrice = trade.price
+            self.entryPrice = None
+
+########################################################################
 class TargetPosTemplate(CtaTemplate):
     """
     允许直接通过修改目标持仓来实现交易的策略模板
