@@ -2,7 +2,12 @@
 
 # 系统模块
 from __future__ import print_function
-from queue import Queue, Empty
+import sys
+is_py2 = sys.version[0] == '2'
+if is_py2:
+    import Queue as queue
+else:
+    import queue as queue
 from threading import Thread
 from time import sleep
 from collections import defaultdict
