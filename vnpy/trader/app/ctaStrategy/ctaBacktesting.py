@@ -608,7 +608,19 @@ class BacktestingEngine(object):
     #------------------------------------------------      
     
     #----------------------------------------------------------------------
-    def prettyResultList(self, resultList):
+    def printResult(self, result, nameIndexDict):
+        for name in nameIndexDict.keys():
+            value = result.get(nameIndexDict[name])
+            if value:
+                if isinstance(value, float):
+                    value = formatNumber(value)
+                if 'Rate' in value:
+                    value = str(value) + '%'
+                print('%s:\t\t%s' % (name, value))
+
+
+    #----------------------------------------------------------------------
+    def prettyTradeList(self, resultList):
         """使用prettytable打印出交易记录"""
         import prettytable as pt
 
