@@ -608,6 +608,44 @@ class BacktestingEngine(object):
     #------------------------------------------------      
     
     #----------------------------------------------------------------------
+    def prettyResultList(self, resultList):
+        """使用prettytable打印出交易记录"""
+        import prettytable as pt
+
+        def longOrShort(v):
+            if v > 0:
+                return u'多'
+            else:
+                return u'空'
+
+        tb = pt.PrettyTable()
+        tb.field_names = [u'序号',
+                         u'入场方向',
+                         u'入场价格',
+                         u'入场时间',
+                         u'出场方向',
+                         u'出场价格',
+                         u'出场时间',
+                         u'交易手数',
+                         u'利润',
+                         u'累加利润']
+        index = 1
+        accPnl = 0
+        for t in resultList:
+            accPnl += t.pnl
+            tb.add_row([index, 
+                        longOrShort(t.volume), 
+                        t.entryPrice, 
+                        t.entryDt, 
+                        longOrShort(-t.volume), 
+                        t.exitPrice, 
+                        t.exitDt, 
+                        t.volume, 
+                        t.pnl, 
+                        accPnl])
+            index += 1
+        return tb
+    #----------------------------------------------------------------------
     def calculateBacktestingResult(self):
         """
         计算回测结果
