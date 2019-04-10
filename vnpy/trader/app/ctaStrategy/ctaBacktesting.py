@@ -116,7 +116,7 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def output(self, content):
         """输出内容"""
-        print(str(datetime.now()) + "\t" + content)     
+        print(str(datetime.now()) + "\t" + content.encode('utf-8'))     
     
     #------------------------------------------------
     # 参数设置相关

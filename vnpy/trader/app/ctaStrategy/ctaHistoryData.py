@@ -18,13 +18,14 @@ import pymongo
 
 from vnpy.trader.vtGlobal import globalSetting
 from vnpy.trader.vtConstant import *
-from vnpy.trader.vtObject import VtBarData
+from vnpy.trader.vtObject import VtBarData, VtTickData
+from vnpy.trader.vtUtility import BarGenerator1
 from .ctaBase import SETTING_DB_NAME, TICK_DB_NAME, MINUTE_DB_NAME, DAILY_DB_NAME
 
 
 #----------------------------------------------------------------------
 def downloadEquityDailyBarts(self, symbol):
-    """
+    """ 
     下载股票的日行情，symbol是股票代码
     """
     print(u'开始下载%s日行情' %symbol)
@@ -172,6 +173,38 @@ def loadTbPlusCsv(fileName, dbName, symbol):
         print(bar.date, bar.time)    
 
     print(u'插入完毕，耗时：%s' % (time()-start))
+
+
+#----------------------------------------------------------------------
+def exportTickTbPlusCsv(fileName, dbName, symbol, interval, start, end=None):
+    """将数据库tick数据导出到TBPlus格式的csv"""
+    client = pymongo.MongoClient(globalSetting['mongoHost'], globalSetting['mongoPort'])
+    collection = client[dbName][symbol]
+    with open(fileName, 'w') as f:
+        def writeBar(bar):
+            line = ''
+            line += bar.datetime.strftime('%Y-%m-%d %H:%M:%S') + ','
+            line += str(bar.open) + ','
+            line += str(bar.high) + ','
+            line += str(bar.low) + ','
+            line += str(bar.close) + ','
+            line += str(bar.volume) + ','
+            line += str(bar.openInterest) + '\n'
+            print(line)
+            f.write(line)
+        bg = BarGenerator1(writeBar, interval)
+        start = datetime.strptime(start, '%Y%m%d')
+        if end:
+            end = datetime.strptime(end, '%Y%m%d')
+            flt = {'datetime':{'$gte': start,'$lte':end}} 
+        else:
+            flt = {'datetime':{'$gte':end}}
+        cursor = collection.find(flt).sort('datetime')
+        for d in cursor:
+            tick = VtTickData()
+            tick.__dict__ = d
+            bg.updateTick(tick)
+        writeBar(bg.getLastBar())
 
 #----------------------------------------------------------------------
 """
